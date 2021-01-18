@@ -16,7 +16,10 @@ class HomeController extends Controller {
         if (!empty($_GET['setCate'])) {
             Video::categories_crawler();
         }
-//        Video::video_crawler();
+        if (!empty($_GET['setCountry'])) {
+            Video::countries_crawler();
+        }
+        Video::video_crawler();
         return view('home.index');
     }
 

@@ -25,6 +25,7 @@ class CreateVideosTable extends Migration
             $table->boolean('is_hot')->default(0);
             $table->boolean('status')->default(0);
             $table->integer('country_id')->default(0);
+            $table->integer('cate_id')->default(0);
             $table->timestamps();
             $table->unique('source_id', 'source_id_key');
         });

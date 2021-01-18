@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 use App\Models\Category;
+use App\Models\Country;
 
 class Video extends Model {
 
@@ -23,7 +24,8 @@ class Video extends Model {
         'crawl_at',
         'is_hot',
         'status',
-        'country_id'
+        'country_id',
+        'cate_id'
     ];
 
     /**
@@ -85,8 +87,26 @@ class Video extends Model {
         }
     }
     
+    public static function countries_crawler(){
+        $apiKey = config('services.google')['youtube_api_key'];
+        $apiUrl = self::$youtubeApi."i18nRegions?part=snippet&key={$apiKey}";
+        $res = self::call_api($apiUrl);
+        if (!empty($res['items'])) {
+            foreach ($res['items'] as $v) {
+                $snippet = $v['snippet'];
+                $data = [
+                    'name' => $snippet['name'],
+                    'code' => $snippet['gl']
+                ];
+                Country::updateOrCreate([
+                    'code' => $data['code']
+                ], $data);
+            }
+        }
+    }
+    
     public static function video_crawler(){
-        $data = self::get_youtube_videos();
+        $data = self::get_youtube_trending_videos();
         echo '<pre>';
         print_r($data);
         die();
@@ -102,13 +122,13 @@ class Video extends Model {
     /*
      * Youtube channel crawler
      */
-    public static function get_youtube_videos($data = [], $nextToken = Null, $skip = False) {
+    public static function get_youtube_trending_videos($data = [], $nextToken = Null, $skip = False) {
         # Init
         $today = date('Y-m-d', time());
         $categoryId = 19;
         $country = 'VN';
         $apiKey = config('services.google')['youtube_api_key'];
-        $apiUrl = self::$youtubeApi."videos?part=snippet,id,contentDetails&chart=mostPopular&key={$apiKey}&maxResults=50&videoCategoryId={$categoryId}&regionCode={$country}";
+        $apiUrl = self::$youtubeApi."videos?part=snippet,id,contentDetails&chart=mostPopular&key={$apiKey}&maxResults=50&regionCode={$country}";
         if (!empty($nextToken)) {
             $apiUrl .= "&pageToken={$nextToken}";
         }
@@ -131,7 +151,7 @@ class Video extends Model {
                 
             }
             if (!empty($res['nextPageToken']) && $skip == False) {
-                $data = self::get_channel_videos($data, $res['nextPageToken']);
+                $data = self::get_youtube_trending_videos($data, $res['nextPageToken']);
             }
         }
         

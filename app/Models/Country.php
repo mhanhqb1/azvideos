@@ -13,7 +13,8 @@ class Country extends Model {
      */
     protected $fillable = [
         'name',
-        'code'
+        'code',
+        'crawl_at'
     ];
 
     /**

@@ -17,6 +17,7 @@ class CreateCountriesTable extends Migration
             $table->id();
             $table->string('name', 255);
             $table->string('code', 10);
+            $table->date('crawl_at')->nullable();
             $table->timestamps();
             $table->unique('code', 'code_key');
         });
