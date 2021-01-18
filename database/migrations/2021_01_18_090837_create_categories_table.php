@@ -18,6 +18,7 @@ class CreateCategoriesTable extends Migration
             $table->integer('youtube_id');
             $table->string('name', 255);
             $table->string('slug', 255);
+            $table->boolean('is_trending')->default(0);
             $table->timestamps();
             $table->unique('youtube_id', 'ytb_id_key');
         });

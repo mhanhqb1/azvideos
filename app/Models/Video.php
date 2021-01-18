@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\Category;
+
 class Video extends Model {
 
     /**
@@ -61,6 +63,26 @@ class Video extends Model {
         # Return data
         $data = $data->offset($offset)->limit($limit)->get();
         return $data;
+    }
+    
+    public static function categories_crawler(){
+        $apiKey = config('services.google')['youtube_api_key'];
+        $apiUrl = self::$youtubeApi."videoCategories?part=snippet&regionCode=US&key={$apiKey}";
+        $res = self::call_api($apiUrl);
+        if (!empty($res['items'])) {
+            foreach ($res['items'] as $v) {
+                $snippet = $v['snippet'];
+                $data = [
+                    'youtube_id' => $v['id'],
+                    'name' => $snippet['title'],
+                    'slug' => self::createSlug($snippet['title']),
+                    'is_trending' => !empty($snippet['assignable']) ? 1 : 0
+                ];
+                Category::updateOrCreate([
+                    'youtube_id' => $data['youtube_id']
+                ], $data);
+            }
+        }
     }
     
     public static function video_crawler(){
@@ -133,6 +155,16 @@ class Video extends Model {
         $response = curl_exec($curl);
         curl_close($curl);
         return json_decode($response, true);
+    }
+    
+    public static function createSlug($str, $delimiter = '-'){
+
+        $unwanted_array = ['ś'=>'s', 'ą' => 'a', 'ć' => 'c', 'ç' => 'c', 'ę' => 'e', 'ł' => 'l', 'ń' => 'n', 'ó' => 'o', 'ź' => 'z', 'ż' => 'z',
+            'Ś'=>'s', 'Ą' => 'a', 'Ć' => 'c', 'Ç' => 'c', 'Ę' => 'e', 'Ł' => 'l', 'Ń' => 'n', 'Ó' => 'o', 'Ź' => 'z', 'Ż' => 'z']; // Polish letters for example
+        $str = strtr( $str, $unwanted_array );
+
+        $slug = strtolower(trim(preg_replace('/[\s-]+/', $delimiter, preg_replace('/[^A-Za-z0-9-]+/', $delimiter, preg_replace('/[&]/', 'and', preg_replace('/[\']/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $str))))), $delimiter));
+        return $slug;
     }
 
 }

@@ -13,7 +13,10 @@ class HomeController extends Controller {
      * Homepage
      */
     public static function index() {
-        Video::video_crawler();
+        if (!empty($_GET['setCate'])) {
+            Video::categories_crawler();
+        }
+//        Video::video_crawler();
         return view('home.index');
     }
 
